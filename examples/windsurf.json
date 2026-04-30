@@ -1,0 +1,8 @@
+{
+  "eclincher": {
+    "serverUrl": "https://app.eclincher.com/mcp",
+    "headers": {
+      "x-eclincher-api-key": "YOUR_API_KEY"
+    }
+  }
+}
