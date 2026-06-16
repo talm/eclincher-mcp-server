@@ -1,0 +1,9 @@
+{
+  "name": "eclincher",
+  "displayName": "Eclincher",
+  "description": "Manage social media across 8 networks from your AI agent — publish and schedule posts, triage a unified inbox, and pull analytics through Eclincher's MCP server.",
+  "author": "Eclincher",
+  "version": "1.0.0",
+  "license": "MIT",
+  "keywords": ["social-media","publishing","scheduling","social-inbox","analytics","marketing","eclincher","mcp"]
+}
