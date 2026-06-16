@@ -4,15 +4,16 @@
 
 **Full-stack social media management for AI agents.**
 
-Publish posts, manage your inbox, and pull analytics across
-Facebook · Instagram · X/Twitter · LinkedIn · TikTok · Pinterest · YouTube · Google Business
+Publish, schedule, edit, and engage — plus full inbox management and analytics across
+Facebook · Instagram · X/Twitter · LinkedIn · TikTok · Pinterest · YouTube · Google Business · WordPress · Reddit · Threads
 
 [![MCP](https://img.shields.io/badge/MCP-Streamable_HTTP-blue)](https://modelcontextprotocol.io)
-[![Tools](https://img.shields.io/badge/tools-12-green)](#tools)
-[![Networks](https://img.shields.io/badge/networks-8-purple)](#supported-networks)
+[![Tools](https://img.shields.io/badge/tools-26-green)](#tools)
+[![Networks](https://img.shields.io/badge/networks-12%2B-purple)](#supported-networks)
+[![Auth](https://img.shields.io/badge/auth-OAuth_2.0-orange)](#authentication)
 [![License](https://img.shields.io/badge/license-MIT-gray)](LICENSE)
 
-[Docs](https://developers.eclincher.com) · [Pricing](https://eclincher.com/pricing) · [MCP Info](https://eclincher.com/mcp) · [Get API Key](#quick-start)
+[Docs](https://developers.eclincher.com) · [Pricing](https://eclincher.com/pricing) · [MCP Info](https://eclincher.com/mcp) · [Get Started](#quick-start)
 
 </div>
 
@@ -20,36 +21,51 @@ Facebook · Instagram · X/Twitter · LinkedIn · TikTok · Pinterest · YouTube
 
 ## What is this?
 
-Eclincher MCP is a remote [Model Context Protocol](https://modelcontextprotocol.io) server that gives AI agents — Claude, ChatGPT, Cursor, Windsurf, and others — the ability to manage social media accounts.
+Eclincher MCP is a remote [Model Context Protocol](https://modelcontextprotocol.io) server that gives AI agents — Claude, ChatGPT, Cursor, Windsurf, and others — full-stack control of social media: publishing, inbox engagement, and analytics across 12+ networks.
 
-No `npm install`. No local process. Just point your MCP client to our URL and authenticate.
+No `npm install`. No local process. Point your MCP client at our URL and authenticate.
 
 ```
 Server URL:  https://app.eclincher.com/mcp
 Transport:   Streamable HTTP
-Auth:        x-eclincher-api-key header
+Auth:        OAuth 2.0 (Dynamic Client Registration) — or static x-eclincher-api-key header
+Tools:       26
 ```
 
 ### What can it do?
 
 | Category | What AI agents can do |
 |---|---|
-| **Publishing** | Schedule and publish posts to any combination of 8 social networks. Text, images, video. Immediate or scheduled. |
-| **Inbox** | Read DMs, comments, and mentions across all connected platforms. Paginated, time-range filtered. The only MCP server that offers social inbox access. |
-| **Analytics** | Pull 5 report types: performance, profile comparison, custom reports, competitor benchmarks, and cross-channel aggregated analytics. |
-| **Account management** | List brands, connected profiles, and create new brands. |
+| **Publishing** | Schedule, publish, and edit posts across 12+ networks — text, images, video. Retrieve scheduled posts (with attachments) and track async publish jobs. |
+| **Inbox** | Read and act on DMs, comments, mentions, and reviews: reply, like/favorite/follow, Twitter actions (retweet, follow, block, mute), assign tags/roles/sentiment, and mark complete. The only MCP server with full social inbox access. |
+| **Inbox → CRM & ticketing** | Push inbox events into Salesforce, Zendesk, or ServiceNow. |
+| **Analytics** | Pull performance, comparison, custom, competitor, and cross-channel reports, with async job-status checks. |
+| **Account management** | List brands and connected profiles; create new brands. |
 
 ---
 
 ## Quick start
 
-### 1. Get your API key
+### 1. Connect
 
-Sign up at [eclincher.com/pricing](https://eclincher.com/pricing) (free 14-day trial), then go to **Settings → API** to generate your API key.
+**OAuth 2.0 — recommended.** MCP clients that support OAuth (Claude.ai, Claude Desktop, Cursor, and others) connect with just the server URL and a one-time browser authorization — no key to copy. Eclincher uses Dynamic Client Registration (RFC 7591), discovered at `/.well-known/oauth-authorization-server`.
+
+**Static API key — alternative.** Existing Eclincher users, scripts, and clients without OAuth can authenticate with a key. Sign up at [eclincher.com/pricing](https://eclincher.com/pricing) (free 14-day trial), go to **Settings → API** to generate one, and send it as the `x-eclincher-api-key` header.
 
 ### 2. Add to your MCP client
 
-Pick your client below, paste the config, and replace `YOUR_API_KEY` with your key.
+Pick your client below. The examples use static-key auth; for OAuth, use the same server URL **without** the `headers` block and authorize when prompted.
+
+---
+
+## Authentication
+
+| Method | Best for | How |
+|---|---|---|
+| **OAuth 2.0 + DCR** (RFC 7591) | Claude.ai, Cursor, Claude Desktop, and other OAuth-capable MCP clients | Add the server URL; authorize in the browser. Discovery: `https://app.eclincher.com/.well-known/oauth-authorization-server` · Registration: `https://app.eclincher.com/oauth/register` · Scope: `mcp` |
+| **Static API key** | Existing users, scripts, REST API, clients without OAuth | Header `x-eclincher-api-key: YOUR_API_KEY`. Generate in **Settings → API** (max 3 active keys per account). |
+
+For direct REST API calls, also include `version: v5` and `Content-Type: application/json`.
 
 ---
 
@@ -75,15 +91,15 @@ Edit your config file:
 }
 ```
 
-Restart Claude Desktop after saving.
+Restart Claude Desktop after saving. (For OAuth, omit the `headers` block and authorize when prompted.)
 
 ---
 
 ### Claude.ai (web)
 
-1. Go to **Settings → Integrations → Add MCP Server**
+1. Go to **Settings → Connectors → Add custom connector**
 2. Server URL: `https://app.eclincher.com/mcp`
-3. Add custom header: `x-eclincher-api-key`
+3. Authorize in the browser (OAuth), or add the custom header `x-eclincher-api-key` to use a static key.
 
 ---
 
@@ -171,38 +187,79 @@ Edit `~/.continue/config.json`:
 1. Open **Cline Settings → MCP Servers → Add Remote Server**
 2. Transport: `Streamable HTTP`
 3. URL: `https://app.eclincher.com/mcp`
-4. Add header: `x-eclincher-api-key`
+4. Authorize via OAuth, or add the header `x-eclincher-api-key`.
 
 ---
 
 ## Tools
 
+26 tools across publishing, inbox, analytics, and account management.
+
+### Brands & accounts
+
 | Tool | Description |
 |---|---|
-| `list_brands` | List all brands you have access to. Call this first — you need a `brandId` for other tools. |
+| `list_brands` | List all brands for the authenticated user. Call this first — other tools need a `brandId`. |
 | `create_brand` | Create a new brand. |
-| `list_accounts` | List connected social media profiles for a brand. Returns profile IDs for publishing and analytics. |
-| `create_post` | Create or schedule a post. Supports text, image URL, video URL, and scheduled times. |
-| `list_inbox` | List inbox messages — DMs, comments, and mentions. Time-range filtered, paginated. Max 90-day range. |
-| `get_builtin_report` | Get performance analytics for a single social profile. |
-| `get_comparison_report` | Compare analytics across multiple profiles. |
+| `list_accounts` | List connected social profiles for a brand. Returns profile IDs for publishing and analytics. |
+
+### Publishing
+
+| Tool | Description |
+|---|---|
+| `create_post` | Schedule or publish a post (text, image/video). Runs async — returns a `jobId`. |
+| `edit_post` | Edit a scheduled post. Keep existing attachments (pass them back from `get_scheduled_posts`), add new image/video URLs, or replace the video (one video supported). |
+| `get_scheduled_posts` | Retrieve scheduled posts by filters (time range, profiles, post types, search). Includes each post's attachments with S3 URLs. |
+| `get_post_status` | Check the status of an async `create_post` job by `jobId`. |
+
+### Inbox
+
+| Tool | Description |
+|---|---|
+| `list_inbox` | List inbox messages — DMs, comments, mentions — with filters (event types, profiles, tags, roles, sentiment, search, read/completed state). |
+| `list_inbox_tags` | List inbox tags available for a brand (valid values for the `list_inbox` tags filter). |
+| `list_inbox_roles` | List team members/roles for the account (valid values for the `list_inbox` roles filter). |
+| `reply_to_inbox_event` | Reply to a message or comment on a social profile, with optional image/video attachments. |
+| `like_inbox_event` | Like, favorite, or follow an inbox event. |
+| `twitter_inbox_actions` | Twitter-specific actions: retweet, follow, block, or mute. |
+| `set_inbox_events` | Update inbox event metadata — assign tags, roles, feeds, sentiments, or mark events. |
+| `complete_inbox_event` | Mark an inbox event complete, or reopen it (completion audit record generated server-side). |
+
+### Inbox → CRM & ticketing
+
+| Tool | Description |
+|---|---|
+| `salesforce_inbox_request` | Create or update a Salesforce record from an inbox event. |
+| `zendesk_inbox_request` | Create or update a Zendesk ticket from an inbox event. |
+| `servicenow_inbox_request` | Create or update a ServiceNow incident from an inbox event. |
+
+### Analytics
+
+| Tool | Description |
+|---|---|
+| `get_builtin_report` | Built-in performance report for a brand/profile. |
+| `get_comparison_report` | Compare analytics across profiles. |
+| `get_cross_channel_report` | Aggregated analytics across networks. |
 | `list_custom_reports` | List custom analytics reports for a brand. |
 | `get_custom_report` | Get data for a specific custom report. |
 | `list_competitor_reports` | List competitor analysis reports. |
 | `get_competitor_report` | Get competitor benchmark data. |
-| `get_cross_channel_report` | Get aggregated analytics across multiple profiles and networks. |
+| `get_analytics_job_status` | Check the status of an async analytics job by `jobId`. |
 
 ### Key data formats
 
-- **brandId**: `ecagencyclient@<uuid>` format
-- **profileIds** (analytics): Pipe-delimited UUIDs → `uuid1|uuid2|uuid3`
-- **Timestamps**: Unix seconds (not milliseconds)
-- **Timeframes**: `today`, `yesterday`, `last7days`, `last30days`, `thisweek`, `lastweek`, `thismonth`, `lastmonth`, `thisyear`, `lastyear`
-- **Account types**: `facebook`, `instagram`, `twitter`, `linkedin`, `pinterest`, `tiktok`, `youtube`, `google_business`
+- **brandId** — opaque identifier returned by `list_brands`; pass it back exactly as received, never construct or parse it.
+- **profile vs profileIds** — publishing (`create_post`) takes a `profile` **array** of IDs; analytics take `profileIds` as a **single** UUID (`get_builtin_report`) or **pipe-delimited** `uuid1|uuid2` (max 20) for comparison/cross-channel.
+- **Async jobs** — `create_post` and some analytics reports return a `jobId`; poll `get_post_status` / `get_analytics_job_status` until complete.
+- **Timestamps** — Unix **seconds** (not milliseconds).
+- **Timeframes** — `today`, `yesterday`, `last7days`, `last30days`, `thisweek`, `lastweek`, `thismonth`, `lastmonth`, `thisyear`, `lastyear`.
+- **Account types** (analytics) — `facebook`, `instagram`, `twitter`, `linkedin`, `pinterest`, `tiktok`, `youtube`, `google_business`.
 
 ---
 
 ## Supported networks
+
+Full-stack support — publish, inbox, and analytics on every network:
 
 | Network | Publish | Inbox | Analytics |
 |---|---|---|---|
@@ -214,6 +271,9 @@ Edit `~/.continue/config.json`:
 | Pinterest | ✅ | ✅ | ✅ |
 | YouTube | ✅ | ✅ | ✅ |
 | Google Business | ✅ | ✅ | ✅ |
+| WordPress | ✅ | ✅ | ✅ |
+| Reddit | ✅ | ✅ | ✅ |
+| Threads | ✅ | ✅ | ✅ |
 
 ---
 
@@ -222,8 +282,14 @@ Edit `~/.continue/config.json`:
 **Publishing**
 > "Schedule a post about our new product to Instagram, LinkedIn, and TikTok for tomorrow at 9 AM"
 
+> "Move my Friday post to Saturday and swap in this new image"
+
 **Inbox**
-> "Show me all DMs and comments from the last 24 hours"
+> "Show me all unanswered DMs and comments from the last 24 hours"
+
+> "Reply to Sarah's comment thanking her, then mark it complete"
+
+> "Open a Zendesk ticket from this complaint and tag it as urgent"
 
 **Analytics**
 > "How did our Instagram perform this month vs last month?"
