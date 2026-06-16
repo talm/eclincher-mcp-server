@@ -23,7 +23,7 @@ List all brands you have access to. Always call this first.
 **Parameters**: None
 
 **Returns**: Array of `{ brandName, brandId }`.
-Example brandId: `Eclient$@5RtY?076-Ag&2^38-4(a05-9ZZz!~6d%3-5fs@G^^&^44556aT#6`
+Example brandId: `Eclient$@$$RtY?076-Ag&e^38-4(a05-9ZZz!~d%3-5fs@G^^&^4556aT#6`
 
 ### create_brand
 
