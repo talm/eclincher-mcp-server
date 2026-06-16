@@ -1,0 +1,63 @@
+---
+description: How to use Eclincher's social media tools (brands, accounts, publishing, inbox engagement, CRM/ticketing, analytics) correctly via the Eclincher MCP server.
+alwaysApply: false
+---
+
+# Using Eclincher tools
+
+Eclincher manages social media over MCP across 12+ social networks: Facebook, Instagram, X/Twitter, LinkedIn, TikTok, Pinterest, YouTube, Google Business Profile, WordPress, Reddit, and Threads. Auth is OAuth 2.0 (or a static `x-eclincher-api-key` header, already in `mcp.json`); all data is scoped to the authenticated account. Follow each tool's `inputSchema` for exact fields — the notes below cover the non-obvious parts.
+
+## Always resolve IDs first
+1. Call `list_brands` to get brands. `brandId` is an opaque token — pass back exactly what the tool returns; never construct, parse, or guess it.
+2. Call `list_accounts` with that `brandId` to get connected profile IDs and their networks.
+3. Feed those exact IDs into publishing, inbox, and analytics calls.
+
+## Async jobs — poll for results
+- `create_post` returns a `jobId`; poll `get_post_status` until it completes before assuming a post went out.
+- Some analytics reports run async too; poll `get_analytics_job_status` by `jobId`.
+
+## Profiles are passed differently per tool
+- `create_post` → `profile`: an **array** of profile IDs (`string[]`).
+- `get_builtin_report` → `profileIds`: a **single** profile UUID (string).
+- `get_comparison_report`, `get_cross_channel_report` → `profileIds`: **pipe-delimited** UUIDs, e.g. `uuid1|uuid2` (max 20).
+
+## Time is Unix **seconds** (not milliseconds)
+Applies to `create_post.scheduleTimes` and `list_inbox.startTime`/`endTime`. Omit `scheduleTimes` to publish now; only schedule times in the future.
+
+## Publishing
+- `create_post` — schedule or publish; one call can target multiple networks at once (include every destination profile in the `profile` array). `text` max 10,000 chars; `image`/`video` are https URLs. Async → returns a `jobId`.
+- `get_scheduled_posts` — find scheduled posts by filters (time range, profiles, post types, search); returns each post's attachments with S3 URLs.
+- `edit_post` — edit a scheduled post. To keep existing attachments, pass them back from `get_scheduled_posts`; you can add new image/video URLs or replace the video (one video supported).
+- `get_post_status` — check an async `create_post` job by `jobId`.
+
+## Inbox — read
+- `list_inbox` — DMs, comments, mentions for a brand. Filters: event types, profiles, tags, roles, sentiment, search, read/completed state. Requires `brandId`, `startTime`, `endTime` (unix seconds); `endTime` after `startTime`; max 90-day range; paginate with `nextId`.
+- `list_inbox_tags` / `list_inbox_roles` — fetch the valid tag and role values *before* using them as `list_inbox` filters or in `set_inbox_events`.
+
+## Inbox — act
+- `reply_to_inbox_event` — reply to a message/comment, with optional image/video.
+- `like_inbox_event` — like, favorite, or follow an event.
+- `twitter_inbox_actions` — Twitter-only: retweet, follow, block, mute.
+- `set_inbox_events` — assign tags, roles, feeds, sentiments, or mark events.
+- `complete_inbox_event` — mark complete or reopen (completion audit record is generated server-side).
+
+## Inbox → CRM & ticketing
+- `salesforce_inbox_request` — create/update a Salesforce record from an event.
+- `zendesk_inbox_request` — create/update a Zendesk ticket from an event.
+- `servicenow_inbox_request` — create/update a ServiceNow incident from an event.
+
+## Analytics (read-only)
+- `get_builtin_report` — one profile; needs `account_type` and a `timeframe`.
+- `get_comparison_report` — compare profiles (pipe-delimited `profileIds`).
+- `get_cross_channel_report` — aggregated across networks (pipe-delimited `profileIds`).
+- `list_custom_reports` / `get_custom_report` — saved custom reports (by `reportId`).
+- `list_competitor_reports` / `get_competitor_report` — competitor benchmarks (by `reportId` + `timeframe`).
+- `get_analytics_job_status` — check an async analytics job by `jobId`.
+- `timeframe` ∈ today, yesterday, last7days, last30days, thisweek, lastweek, thismonth, lastmonth, thisyear, lastyear.
+- `account_type` (analytics) ∈ facebook, instagram, twitter, linkedin, pinterest, tiktok, youtube, google_business.
+
+## Concurrency
+Concurrency is capped per plan (Standard = 2, Professional = 10 simultaneous requests). Don't fan out more parallel tool calls than the plan allows; sequence or chunk large jobs and back off on rate-limit responses.
+
+## Read vs write — confirm writes
+Read-only: `list_brands`, `list_accounts`, `get_scheduled_posts`, `get_post_status`, `list_inbox`, `list_inbox_tags`, `list_inbox_roles`, all report tools, and the job-status tools. Writes / external side effects: `create_brand`, `create_post`, `edit_post`, `reply_to_inbox_event`, `like_inbox_event`, `twitter_inbox_actions`, `set_inbox_events`, `complete_inbox_event`, and the Salesforce/Zendesk/ServiceNow tools. Confirm publishing, replying, or other state-changing actions with the user before calling.
