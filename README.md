@@ -331,7 +331,7 @@ Rate limit headers are included in every response.
 
 ## Links
 
-- [Developer Portal](https://developers.eclincher.com)
+- [Developer Portal](https://eclincher.com/developers)
 - [MCP Info](https://eclincher.com/mcp)
 - [Pricing](https://eclincher.com/pricing)
 - [Auto-discovery](https://app.eclincher.com/.well-known/mcp.json)
