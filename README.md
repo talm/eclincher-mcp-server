@@ -10,7 +10,7 @@ Facebook · Instagram · X/Twitter · LinkedIn · TikTok · Pinterest · YouTube
 [![MCP](https://img.shields.io/badge/MCP-Streamable_HTTP-blue)](https://modelcontextprotocol.io)
 [![Tools](https://img.shields.io/badge/tools-26-green)](#tools)
 [![Networks](https://img.shields.io/badge/networks-12%2B-purple)](#supported-networks)
-[![Auth](https://img.shields.io/badge/auth-OAuth_2.0-orange)](#authentication)
+[![Auth](https://img.shields.io/badge/auth-OAuth_2.0-orange)](#oauth-20)
 [![License](https://img.shields.io/badge/license-MIT-gray)](LICENSE)
 
 [Docs](https://developers.eclincher.com) · [Pricing](https://eclincher.com/pricing) · [MCP Info](https://eclincher.com/mcp) · [Get Started](#quick-start)
@@ -48,7 +48,7 @@ Tools:       26
 
 ### 1. Connect
 
-**OAuth 2.0 — recommended.** MCP clients that support OAuth (Claude.ai, Claude Desktop, Cursor, and others) connect with just the server URL and a one-time browser authorization — no key to copy. Eclincher uses Dynamic Client Registration (RFC 7591), discovered at `/.well-known/oauth-authorization-server`.
+**OAuth 2.0 — recommended.** MCP clients that support OAuth (Claude.ai, Claude Desktop, Cursor, and others) connect with just the server URL and a one-time browser authorization — no key to copy. Eclincher uses Dynamic Client Registration (RFC 7591), discovered at `/.well-known/oauth-authorization-server`. See [OAuth 2.0](#oauth-20) for the full flow.
 
 **Static API key — alternative.** Existing Eclincher users, scripts, and clients without OAuth can authenticate with a key. Sign up at [eclincher.com/pricing](https://eclincher.com/pricing) (free 14-day trial), go to **Settings → API** to generate one, and send it as the `x-eclincher-api-key` header.
 
@@ -62,10 +62,56 @@ Pick your client below. The examples use static-key auth; for OAuth, use the sam
 
 | Method | Best for | How |
 |---|---|---|
-| **OAuth 2.0 + DCR** (RFC 7591) | Claude.ai, Cursor, Claude Desktop, and other OAuth-capable MCP clients | Add the server URL; authorize in the browser. Discovery: `https://app.eclincher.com/.well-known/oauth-authorization-server` · Registration: `https://app.eclincher.com/oauth/register` · Scope: `mcp` |
+| **OAuth 2.0 + DCR** (RFC 7591) | Claude.ai, Cursor, Claude Desktop, and other OAuth-capable MCP clients | Add the server URL and authorize in the browser — no key to copy. Full flow and endpoints in [OAuth 2.0](#oauth-20). |
 | **Static API key** | Existing users, scripts, REST API, clients without OAuth | Header `x-eclincher-api-key: YOUR_API_KEY`. Generate in **Settings → API** (max 3 active keys per account). |
 
 For direct REST API calls, also include `version: v5` and `Content-Type: application/json`.
+
+---
+
+## OAuth 2.0
+
+**The recommended way to connect.** OAuth-capable MCP clients — Claude.ai, Claude Desktop, Cursor, Windsurf, and others — connect with nothing but the server URL. There's no API key to generate, copy, or rotate: on first connect your client opens a browser window where you sign in to Eclincher and grant access, and tokens are handled for you from there.
+
+### How it works
+
+Eclincher implements the MCP authorization spec on top of standard OAuth 2.0, so everything is discovered and registered automatically — there's no "create an app, copy a client ID and secret" step.
+
+| Capability | Spec | Endpoint / value |
+|---|---|---|
+| Authorization Server Metadata | RFC 8414 | `https://app.eclincher.com/.well-known/oauth-authorization-server` |
+| Dynamic Client Registration | RFC 7591 | `https://app.eclincher.com/oauth/register` |
+| Authorization Code + PKCE | RFC 6749 / 7636 | discovered from metadata |
+| Scope | — | `mcp` |
+
+Your client reads the authorization and token endpoints from the metadata document, so there's nothing to hardcode beyond the server URL itself.
+
+### Connection flow
+
+1. Client fetches server metadata from the `.well-known` endpoint.
+2. Client registers itself automatically (DCR) and receives credentials.
+3. Client opens the authorization URL in your browser.
+4. You sign in to Eclincher and approve the connection.
+5. Client exchanges the authorization code (with PKCE) for an access token.
+6. Client calls the MCP server with the bearer token, refreshing automatically as needed.
+
+In practice: **paste the server URL → click Authorize → done.**
+
+### OAuth client config
+
+OAuth config is identical to the static-key examples below — just drop the `headers` block and let the client handle browser authorization:
+
+```json
+{
+  "mcpServers": {
+    "eclincher": {
+      "url": "https://app.eclincher.com/mcp"
+    }
+  }
+}
+```
+
+This applies to every client in [Client configurations](#client-configurations): use the same snippet, without `headers`. For clients with a built-in connector UI (Claude.ai, Cline), just add the server URL and authorize when prompted.
 
 ---
 
@@ -120,6 +166,8 @@ Create `.cursor/mcp.json` in your project root (or add to global settings):
 }
 ```
 
+(For OAuth, omit the `headers` block and authorize when prompted.)
+
 ---
 
 ### Windsurf IDE
@@ -136,6 +184,8 @@ Go to **Settings → MCP Servers → Add Server**, or add to your config:
   }
 }
 ```
+
+(For OAuth, omit the `headers` block and authorize when prompted.)
 
 ---
 
@@ -156,6 +206,8 @@ Create `.vscode/mcp.json` in your project root:
   }
 }
 ```
+
+(For OAuth, omit the `headers` block and authorize when prompted.)
 
 ---
 
@@ -179,6 +231,8 @@ Edit `~/.continue/config.json`:
   ]
 }
 ```
+
+(For OAuth, omit the `headers` block and authorize when prompted.)
 
 ---
 
