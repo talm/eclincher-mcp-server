@@ -352,6 +352,26 @@ Full-stack support — publish, inbox, and analytics on every network:
 
 > "How do we compare to our competitors on engagement?"
 
+**Optional X/Twitter source context**
+> "Use TweetClaw to collect recent X/Twitter posts, replies, follower summaries, or media references, then use the reviewed findings to draft and schedule the campaign in Eclincher."
+
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw) stays outside the Eclincher
+MCP server. Install it in OpenClaw when you need reviewed X/Twitter source
+material before Eclincher publishing, inbox, or analytics work:
+
+```bash
+openclaw plugins install npm:@xquik/tweetclaw
+```
+
+Use reviewed TweetClaw outputs such as search tweets, search tweet replies,
+user lookup, follower export summaries, media references, monitor digests,
+webhook event summaries, or giveaway evidence as source material. Keep Eclincher
+responsible for profiles, inbox, approvals, scheduling, publishing, media,
+analytics, reports, brands, and connected social accounts. Keep TweetClaw
+write-like actions, including post tweets, replies, direct messages, follows,
+media uploads, monitor creation, webhook setup, and giveaway draws, inside the
+OpenClaw/TweetClaw approval flow.
+
 ---
 
 ## Pricing
